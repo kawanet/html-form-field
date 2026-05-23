@@ -197,4 +197,13 @@ export type FormField<T = any> = formField.FormField<T>
 
 export type FormFieldOptions<T = any> = formField.FormFieldOptions<T>
 
+/**
+ * Construct a `FormField` bound to the form control(s) with the given `name`.
+ *
+ * Construction itself does not throw when zero controls match — the resulting
+ * field can still call `closest()` to locate the surrounding container so the
+ * caller can populate a dynamic group and then `reload()`. Methods that
+ * actually need an item (`items()`, `value`, `current()`, `toggle()`, …) throw
+ * `Not found: name=...` lazily until at least one control is matched.
+ */
 export const formField: <T = any>(options: FormFieldOptions<T>) => FormField<T>

@@ -92,7 +92,10 @@ describe("bind-to", async () => {
 
         // @ts-expect-error
         // TS2322: Type '"TX0"' is not assignable
-        assert.throws(() => formField({form, bindTo: ctx, name: "TX0"}), /Not found/)
+        // Construction no longer throws on a zero-match name; the error
+        // surfaces lazily once an item-level method is called.
+        const ghost = formField({form, bindTo: ctx, name: "TX0"})
+        assert.throws(() => ghost.items(), /Not found/)
 
         assert.throws(() => formField({form, bindTo: ctx, name: undefined}), /Invalid name/)
 
