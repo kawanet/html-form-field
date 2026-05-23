@@ -1,4 +1,4 @@
-import type {FormField, formField as NS} from "../types/html-form-field.d.ts"
+import type {FormField, formField as NS} from "html-form-field"
 
 const triggerOnWrite = (field: FormField) => {
     const onWrite = field.options.onWrite
