@@ -1,7 +1,7 @@
 {
   "name": "html-form-field",
   "description": "Unified interface for HTML form fields with synchronized binding to object properties",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "author": "@kawanet",
   "bugs": {
     "url": "https://github.com/kawanet/html-form-field/issues"
@@ -14,15 +14,15 @@
     "@rollup/plugin-commonjs": "^28.0.6",
     "@rollup/plugin-multi-entry": "^7.1.0",
     "@rollup/plugin-node-resolve": "^16.0.3",
-    "@rollup/plugin-sucrase": "^5.0.2",
+    "@rollup/plugin-sucrase": "^5.1.0",
     "@rollup/plugin-terser": "^0.4.4",
-    "@types/jsdom": "^27.0.0",
+    "@types/jsdom": "^28.0.3",
     "@types/node": "^24.9.1",
-    "html-ele": "^0.0.1",
-    "jsdom": "^27.0.1",
-    "mocha": "^11.7.4",
-    "rollup": "^4.52.5",
-    "terser": "^5.44.0",
+    "html-ele": "^0.1.1",
+    "jsdom": "^29.1.1",
+    "mocha": "^11.7.6",
+    "rollup": "^4.60.4",
+    "terser": "^5.48.0",
     "typescript": "^5.9.3"
   },
   "devEngines": {
