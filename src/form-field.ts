@@ -36,9 +36,19 @@ const getNodeList = <T>({form, name}: {form: ParentNode, name: NS.StringKeys<T>}
     return nodeList
 }
 
-const updateEventListener = (nodeList: Iterable<NS.FieldElement>, handler: FieldEventHandler) => {
+// Detach `change` listeners from elements that were part of the previous
+// `_fields` snapshot. Pair this with `addEventListeners` on the new
+// snapshot inside `reload()` so a control that dropped out of the
+// selector (renamed, removed from the DOM, or moved out of the form)
+// stops firing this field's handlers.
+const removeEventListeners = (nodeList: Iterable<NS.FieldElement>, handler: FieldEventHandler) => {
     for (const node of nodeList) {
         node.removeEventListener("change", handler)
+    }
+}
+
+const addEventListeners = (nodeList: Iterable<NS.FieldElement>, handler: FieldEventHandler) => {
+    for (const node of nodeList) {
         node.addEventListener("change", handler)
     }
 }
@@ -95,7 +105,7 @@ class FormBridgeImpl<T = any> implements FormField<T> {
         }
 
         const fields = this._fields = Array.from(getNodeList(options))
-        updateEventListener(fields, _onChange)
+        addEventListeners(fields, _onChange)
         this._items = fields.length ? formItemList(this, fields) : null
 
         const defaults = options.defaults
@@ -156,8 +166,13 @@ class FormBridgeImpl<T = any> implements FormField<T> {
     }
 
     reload(): void {
+        // Detach handlers from the previous snapshot first — `getNodeList()`
+        // can now legitimately return fewer (or zero) controls, and any
+        // node that drops out of the selector must stop firing this
+        // field's `change` listener.
+        removeEventListeners(this._fields, this._onChange)
         const fields = this._fields = Array.from(getNodeList(this.options))
-        updateEventListener(fields, this._onChange)
+        addEventListeners(fields, this._onChange)
         this._items = fields.length ? formItemList(this, fields) : null
     }
 

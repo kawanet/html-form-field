@@ -5,6 +5,10 @@ import {formField} from "html-form-field"
 
 describe("lazy-throw on missing", async () => {
     const {ELE} = await import("html-ele")
+    // node:test runs under jsdom but does not expose the DOM constructors
+    // on globalThis — only `document`. Pull `Event` from the window so
+    // `new Event("change")` works the same as in the browser.
+    const Event = document.defaultView.Event
 
     it("construction does not throw when zero controls match", () => {
         // language=HTML
@@ -91,6 +95,41 @@ describe("lazy-throw on missing", async () => {
         field.reload()
 
         assert.throws(() => field.items(), /Not found: name="favo"/)
+    })
+
+    it("reload() detaches the change listener from controls that dropped out", () => {
+        // Regression for a pre-existing leak that lazy-throw made
+        // easier to hit: when `reload()` transitions from N controls
+        // to M < N (including M = 0), the (N − M) elements that no
+        // longer match the selector must stop firing this field's
+        // change handler. Previously `updateEventListener` only
+        // re-bound the new list and left the old listeners attached.
+        // language=HTML
+        const form = (ELE`
+            <form>
+                <div class="radio-group">
+                    <label><input type="radio" name="favo" value="tech">Tech</label>
+                    <label><input type="radio" name="favo" value="travel">Travel</label>
+                </div>
+            </form>
+        `)
+
+        let fired = 0
+        const field = formField({form, name: "favo", onChange: () => fired++})
+        const travel = form.querySelector<HTMLInputElement>('input[value="travel"]')
+
+        // Sanity: the original binding fires.
+        travel.dispatchEvent(new Event("change"))
+        assert.equal(fired, 1)
+
+        // Drop the second radio and reload — the field is now down to one
+        // control, and the orphaned `<input>` should no longer trip the
+        // handler even though its JS reference is still around.
+        travel.remove()
+        field.reload()
+
+        travel.dispatchEvent(new Event("change"))
+        assert.equal(fired, 1, "orphaned control must not fire onChange")
     })
 
     it("Invalid name (falsy) still throws at construction", () => {
