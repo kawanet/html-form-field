@@ -141,6 +141,26 @@ declare namespace formField {
          * or `undefined` if no item has the given value.
          */
         itemOf(value: string): FormItem | undefined
+
+        /**
+         * Walk up from the field's first element (inclusive) and return the closest
+         * ancestor that matches `selector`, mirroring `Element.closest()`.
+         *
+         * The primary use case is reaching the container element so you can mutate
+         * the DOM and then call `reload()`. For example, to populate an initially
+         * empty `<select>`:
+         *
+         * ```ts
+         * const cityField = formField({form, name: "city"})
+         * const select = cityField.closest<HTMLSelectElement>("select")
+         * select.add(new Option("Tokyo", "tokyo"))
+         * cityField.reload()
+         * ```
+         *
+         * For multi-element fields (checkbox/radio groups), the walk starts from
+         * the first element only. Returns `null` if no ancestor matches.
+         */
+        closest<E extends Element = Element>(selector: string): E | null
     }
 
     interface FormItem<E extends ItemElement = ItemElement> {

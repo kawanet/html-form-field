@@ -77,6 +77,7 @@ class FormBridgeImpl<T = any> implements FormField<T> {
     readonly options: FormFieldOptions<T>
     readonly name: FormField<T>["name"]
 
+    private _fields: NS.FieldElement[]
     private _items: NS.FormItem[]
     private readonly _onChange: FieldEventHandler
 
@@ -90,9 +91,9 @@ class FormBridgeImpl<T = any> implements FormField<T> {
             triggerOnChange(this)
         }
 
-        const nodeList = getNodeList(options)
-        updateEventListener(nodeList, _onChange)
-        this._items = formItemList(this, nodeList)
+        const fields = this._fields = Array.from(getNodeList(options))
+        updateEventListener(fields, _onChange)
+        this._items = formItemList(this, fields)
 
         const defaults = options.defaults
         if (defaults) {
@@ -152,14 +153,31 @@ class FormBridgeImpl<T = any> implements FormField<T> {
     }
 
     reload(): void {
-        const nodeList = getNodeList(this.options)
-        const _onChange = this._onChange
-        updateEventListener(nodeList, _onChange)
-        this._items = formItemList(this, nodeList)
+        const fields = this._fields = Array.from(getNodeList(this.options))
+        updateEventListener(fields, this._onChange)
+        this._items = formItemList(this, fields)
     }
 
     items(): NS.FormItem[] {
         return this._items
+    }
+
+    /**
+     * Walk up from the field's first element (inclusive) and return the
+     * closest ancestor matching the selector. Useful for reaching the
+     * container element when the field is a `<select>` (so you can
+     * append `<option>` elements before calling `reload()`) or when
+     * the field is part of a checkbox/radio group inside a wrapper.
+     *
+     * For multi-element fields (checkbox/radio groups), the walk starts
+     * from the first element only — callers that need a different
+     * starting point can use `items().at(i)?.node.closest(selector)`.
+     *
+     * Returns `null` when no ancestor matches, matching the contract
+     * of `Element.closest()`.
+     */
+    closest<E extends Element = Element>(selector: string): E | null {
+        return this._fields[0]?.closest<E>(selector) ?? null
     }
 
     toggle(value: string, checked?: boolean): boolean {
