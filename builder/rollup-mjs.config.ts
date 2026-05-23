@@ -1,6 +1,7 @@
 import nodeResolve from "@rollup/plugin-node-resolve"
 import sucrase from "@rollup/plugin-sucrase"
 import type {RollupOptions} from "rollup"
+import {isExternal} from "./externals.ts"
 import {showFiles} from "./show-files.ts"
 
 const rollupConfig: RollupOptions = {
@@ -10,6 +11,8 @@ const rollupConfig: RollupOptions = {
         file: "../dist/html-form-field.mjs",
         format: "esm",
     },
+
+    external: isExternal,
 
     plugins: [
         nodeResolve({
