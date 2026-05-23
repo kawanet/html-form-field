@@ -48,17 +48,9 @@ describe("closest", async () => {
         assert.equal(select.tagName, "SELECT")
 
         // Populate the select after the fact and ensure reload() picks
-        // up the new options. Use `document.createElement` rather than
-        // the global `Option` constructor — jsdom-helper only exposes
-        // `document`, not the DOM constructors.
-        const opt1 = document.createElement("option")
-        opt1.value = "tokyo"
-        opt1.textContent = "Tokyo"
-        select.add(opt1)
-        const opt2 = document.createElement("option")
-        opt2.value = "osaka"
-        opt2.textContent = "Osaka"
-        select.add(opt2)
+        // up the new options.
+        select.append(ELE`<option value="tokyo">Tokyo</option>`)
+        select.append(ELE`<option value="osaka">Osaka</option>`)
 
         field.reload()
         assert.equal(field.items().length, 2)
@@ -140,10 +132,7 @@ describe("closest", async () => {
         // Add an option and reload. The closest() lookup must still
         // resolve to the same <select> after the internal field cache
         // is rebuilt.
-        const opt = document.createElement("option")
-        opt.value = "tokyo"
-        opt.textContent = "Tokyo"
-        before.add(opt)
+        before.append(ELE`<option value="tokyo">Tokyo</option>`)
         field.reload()
 
         const after = field.closest<HTMLSelectElement>("select")
