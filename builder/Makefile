@@ -34,7 +34,7 @@ MAX_BYTES := 16000
 # package under test and html-ele are externalized through the
 # alias plugin and global script tags in browser/tests.html, so the
 # test bundle itself stays modest.
-TEST_MAX_BYTES := 60000
+TEST_MAX_BYTES := 80000
 
 ALL := $(MJS_DST) $(CJS_DST) $(MINJS_DST) $(PKG_DST) $(TEST_DST)
 

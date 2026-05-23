@@ -26,20 +26,29 @@ const getNodeList = <T>({form, name}: {form: ParentNode, name: NS.StringKeys<T>}
     const selector = `input[name=${safeName}], textarea[name=${safeName}], button[name=${safeName}], select[name=${safeName}]`
 
     const nodeList = form.querySelectorAll<NS.FieldElement>(selector)
-    if (!nodeList.length) {
-        if (isHTMLElement(form) && form.matches(selector)) {
-            return [form] as NS.FieldElement[]
-        }
-
-        throw new Error(`Not found: name=${safeName}`)
+    if (!nodeList.length && isHTMLElement(form) && form.matches(selector)) {
+        return [form] as NS.FieldElement[]
     }
 
+    // No throw on a 0-match result here: a freshly rendered form may not yet
+    // contain the controls (dynamic radio/checkbox groups, lazy-populated
+    // <select>, etc.). The error surfaces lazily from `items()` instead.
     return nodeList
 }
 
-const updateEventListener = (nodeList: Iterable<NS.FieldElement>, handler: FieldEventHandler) => {
+// Detach `change` listeners from elements that were part of the previous
+// `_fields` snapshot. Pair this with `addEventListeners` on the new
+// snapshot inside `reload()` so a control that dropped out of the
+// selector (renamed, removed from the DOM, or moved out of the form)
+// stops firing this field's handlers.
+const removeEventListeners = (nodeList: Iterable<NS.FieldElement>, handler: FieldEventHandler) => {
     for (const node of nodeList) {
         node.removeEventListener("change", handler)
+    }
+}
+
+const addEventListeners = (nodeList: Iterable<NS.FieldElement>, handler: FieldEventHandler) => {
+    for (const node of nodeList) {
         node.addEventListener("change", handler)
     }
 }
@@ -78,7 +87,11 @@ class FormBridgeImpl<T = any> implements FormField<T> {
     readonly name: FormField<T>["name"]
 
     private _fields: NS.FieldElement[]
-    private _items: NS.FormItem[]
+    // `null` when the most recent getNodeList() returned zero matches.
+    // Methods that need item-level access (items, value, current, etc.)
+    // surface the error lazily; closest() still works because it walks
+    // from `_fields[0]`, which is simply `undefined` in this state.
+    private _items: NS.FormItem[] | null
     private readonly _onChange: FieldEventHandler
 
     constructor(options: FormFieldOptions<T> = {} as FormFieldOptions<T>) {
@@ -92,8 +105,8 @@ class FormBridgeImpl<T = any> implements FormField<T> {
         }
 
         const fields = this._fields = Array.from(getNodeList(options))
-        updateEventListener(fields, _onChange)
-        this._items = formItemList(this, fields)
+        addEventListeners(fields, _onChange)
+        this._items = fields.length ? formItemList(this, fields) : null
 
         const defaults = options.defaults
         if (defaults) {
@@ -153,12 +166,20 @@ class FormBridgeImpl<T = any> implements FormField<T> {
     }
 
     reload(): void {
+        // Detach handlers from the previous snapshot first — `getNodeList()`
+        // can now legitimately return fewer (or zero) controls, and any
+        // node that drops out of the selector must stop firing this
+        // field's `change` listener.
+        removeEventListeners(this._fields, this._onChange)
         const fields = this._fields = Array.from(getNodeList(this.options))
-        updateEventListener(fields, this._onChange)
-        this._items = formItemList(this, fields)
+        addEventListeners(fields, this._onChange)
+        this._items = fields.length ? formItemList(this, fields) : null
     }
 
     items(): NS.FormItem[] {
+        if (!this._items) {
+            throw new Error(`Not found: name=${JSON.stringify(this.name)}`)
+        }
         return this._items
     }
 
