@@ -15,7 +15,7 @@ const rollupConfig: RollupOptions = {
     input: "../test/*.test.ts",
 
     // Bare specifiers stay external; only relative paths are bundled.
-    external: /^[^.\/]/,
+    external: /^[^.\/]+$/,
 
     output: {
         file: "./tests/bundled.mjs",
@@ -27,10 +27,6 @@ const rollupConfig: RollupOptions = {
     plugins: [
         alias({
             entries: [
-                // The suites import the entry point by relative path so they
-                // run on the .ts sources directly during development. Rewrite
-                // that to the package name here: it stays external, and the
-                // bundle resolves it through exports to dist/ at runtime.
                 {find: /^(\.\.\/)+src\/index\.ts$/, replacement: "html-form-field"},
             ],
         }),

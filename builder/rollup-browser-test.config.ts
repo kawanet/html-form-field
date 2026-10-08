@@ -1,9 +1,7 @@
 import alias from "@rollup/plugin-alias"
-import commonjs from "@rollup/plugin-commonjs"
 import multiEntry from "@rollup/plugin-multi-entry"
 import nodeResolve from "@rollup/plugin-node-resolve"
 import sucrase from "@rollup/plugin-sucrase"
-import {fileURLToPath} from "node:url"
 import type {RollupOptions} from "rollup"
 import {showFiles} from "./show-files.ts"
 
@@ -15,9 +13,12 @@ const rollupConfig: RollupOptions = {
     // shim, so the negative pattern keeps them out of the browser bundle.
     input: ["../test/*.test.ts", "!../test/90.*"],
 
+    // Bare specifiers stay external; only relative paths are bundled.
+    external: /^[^.\/]+$/,
+
     output: {
-        file: "../browser/tests/bundled.js",
-        format: "iife",
+        file: "../browser/tests/bundled.mjs",
+        format: "esm",
         // `test/jsdom-helper.ts` uses a dynamic `import("jsdom")` so
         // jsdom only loads on Node. Rollup would normally turn that
         // into a separate chunk, which IIFE output cannot represent;
@@ -30,18 +31,9 @@ const rollupConfig: RollupOptions = {
     treeshake: false,
 
     plugins: [
-        // Browser-side replacements: each entry's import resolves to
-        // the real module under `node --test` and to the local file
-        // listed below in the rollup test bundle.
         alias({
             entries: [
-                {find: "node:test", replacement: fileURLToPath(new URL("./node-test.shim.ts", import.meta.url))},
-                {find: "node:assert", replacement: fileURLToPath(new URL("./node-assert.shim.ts", import.meta.url))},
-                {find: "html-form-field", replacement: fileURLToPath(new URL("../browser/import.js", import.meta.url))},
-                // The suites spell the entry as a relative path; same shim either way.
-                {find: /^(\.\.\/)+src\/index\.ts$/, replacement: fileURLToPath(new URL("../browser/import.js", import.meta.url))},
-                {find: "html-ele", replacement: fileURLToPath(new URL("./html-ele.shim.ts", import.meta.url))},
-                {find: "jsdom", replacement: fileURLToPath(new URL("./jsdom.shim.ts", import.meta.url))},
+                {find: /^(\.\.\/)+src\/index\.ts$/, replacement: "html-form-field"},
             ],
         }),
 
@@ -51,12 +43,6 @@ const rollupConfig: RollupOptions = {
             browser: true,
             preferBuiltins: false,
         }),
-
-        // Required so rollup can interpret `browser/import.js`'s
-        // `exports.formField = formField` syntax (the file is CJS so
-        // it can also serve browserify users — see
-        // browser/package.json).
-        commonjs(),
 
         sucrase({
             disableESTransforms: true,
