@@ -14,13 +14,6 @@ const rollupConfig: RollupOptions = {
     output: {
         file: "../browser/tests/bundled.mjs",
         format: "esm",
-        // `test/jsdom-helper.ts` uses a dynamic `import("jsdom")` so
-        // jsdom only loads on Node. Rollup would normally turn that
-        // into a separate chunk, which IIFE output cannot represent;
-        // force everything into a single bundle so the alias to
-        // `jsdom.shim.ts` lands inline alongside the rest. The same
-        // applies to `await import("html-ele")` calls inside tests.
-        inlineDynamicImports: true,
     },
 
     treeshake: false,
