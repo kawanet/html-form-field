@@ -28,14 +28,14 @@ test("import entry (.mjs)", () => {
 
 test("require entry (.cjs)", {skip: !isNodeJS}, async () => {
     const require = await createRequire(import.meta.url)
-    const m = require("html-form-field")
+    const m: typeof declared = require("html-form-field")
     // entries
     assert.equal(typeof m.formField, "function")
 })
 
 test("minified entry (.min.js)", {skip: !isNodeJS}, async () => {
     const require = await createRequire(import.meta.url)
-    const m = require(await resolvePath("html-form-field", "html-form-field.min.js"))
+    const m: typeof declared = require(await resolvePath("html-form-field", "html-form-field.min.js"))
     // entries
     assert.equal(typeof m.formField, "function")
 })
