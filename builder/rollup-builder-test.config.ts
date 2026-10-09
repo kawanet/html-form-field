@@ -5,17 +5,11 @@ import sucrase from "@rollup/plugin-sucrase"
 import type {RollupOptions} from "rollup"
 import {showFiles} from "./show-files.ts"
 
-// Bundles the test suites into a single plain-JS file that imports the
-// package by name, so any supported Node.js runtime can run them against
-// dist/ without needing type-strip.
 const rollupConfig: RollupOptions = {
-    // Every suite rides the bundle: DOM-dependent ones skip themselves when
-    // NO_JSDOM is set (the packed matrix installs no devDependencies), and
-    // run wherever jsdom is available -- checkouts and the publish gate.
     input: "../test/*.test.ts",
 
     // Bare specifiers stay external; only relative paths are bundled.
-    external: /^[^.\/]/,
+    external: v => /^[^./]/.test(v) && (v !== "multi-entry.js"),
 
     output: {
         file: "./tests/bundled.mjs",
@@ -27,10 +21,6 @@ const rollupConfig: RollupOptions = {
     plugins: [
         alias({
             entries: [
-                // The suites import the entry point by relative path so they
-                // run on the .ts sources directly during development. Rewrite
-                // that to the package name here: it stays external, and the
-                // bundle resolves it through exports to dist/ at runtime.
                 {find: /^(\.\.\/)+src\/index\.ts$/, replacement: "html-form-field"},
             ],
         }),
